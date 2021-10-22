@@ -2,6 +2,10 @@ import { mkdirSync } from "fs";
 import { writeFile, utils, WorkBook } from "xlsx";
 import { CliPromptList, CliPromptNum } from "./core/cli-prompt";
 
+setInterval(() => {
+	// for keep working
+}, 1000);
+
 function makeBook(rangeStart, rangeEnd, spacesPerChunk, chunkSize, additionalNullLines) {
 	const wb: WorkBook = utils.book_new();
 	const wsData: Array<Array<string>> = [];
@@ -139,7 +143,7 @@ async function init() {
 		const nullLinesToAdd = spacesPerFile - spacesPerChunk * 13;
 		const chunkSize = closestAppropriateNumber / 13;
 
-		console.log(`Range ${rangeStart} - ${rangeEnd} | File ${x}`);
+		console.log(`Range ${rangeStart} - ${rangeEnd} | File ${x + 1}`);
 		console.log(
 			`This file will have:\n` +
 				`${closestAppropriateNumber} total lines\n` +
@@ -170,5 +174,8 @@ async function init() {
 		console.log("Saved!");
 		console.log("\n\n##################\n\n");
 	}
+
+	console.log("DONE!");
+	console.log("You can now read the logs or close the programm.");
 }
 init();
