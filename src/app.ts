@@ -1,4 +1,4 @@
-import { mkdirSync } from "fs";
+import { mkdirSync, readFileSync, statSync, writeFileSync } from "fs";
 import { writeFile, utils, WorkBook } from "xlsx";
 import { CliPromptList, CliPromptNum } from "./core/cli-prompt";
 
@@ -65,51 +65,155 @@ function fixLengthAndMakeStr(num) {
 	return fixedStr;
 }
 
-function calculateClosestNumber(startNumber: number, dividers: number[]): number {
+function calculateClosestNumber(
+	startNumber: number,
+	dividers: number[],
+	minDiffWithStart: number,
+): number {
 	let result = startNumber;
 
-	while (!dividers.reduce((acc, el) => (result % el === 0 && acc ? true : false), true)) {
+	while (true) {
+		let appropriate = true;
+
+		for (let divider of dividers) {
+			if (result % divider !== 0) {
+				appropriate = false;
+			}
+
+			// custom check
+			if (result - startNumber < minDiffWithStart) {
+				appropriate = false;
+			}
+		}
+
+		if (appropriate) {
+			break;
+		}
+
 		result += 1;
 	}
 
 	return result;
 }
 
-async function init() {
+async function prompts() {
 	const promptNum = new CliPromptNum();
 	const promptList = new CliPromptList();
 
+	// create file and put default values to it i fno file found
+	try {
+		statSync("./options.json");
+	} catch (e) {
+		writeFileSync(
+			"./options.json",
+			JSON.stringify(
+				{
+					globalThreads: 13,
+					globalColumns: 14,
+					globalStart: 17000001,
+					globalEnd: 20600000,
+					globalChunkSize: 20000,
+				},
+				null,
+				4,
+			),
+		);
+	}
+
+	const parsedOptions: { globalThreads; globalColumns; globalStart; globalEnd; globalChunkSize } =
+		JSON.parse(readFileSync("./options.json", "utf-8"));
+
 	const globalThreadsKey = await promptNum.prompt({
-		question: "Enter threads amount",
-		defaultAnswer: 13,
+		question: "Enter threads amount\n" + "Кол-во потоков",
+		defaultAnswer: parsedOptions.globalThreads,
 	});
 	const globalColumnsKey = await promptNum.prompt({
-		question: "Enter columns amount",
-		defaultAnswer: 14,
+		question: "Enter columns amount\n" + "Кол-во колонок",
+		defaultAnswer: parsedOptions.globalColumns,
 	});
 	const globalStartKey = await promptNum.prompt({
-		question: "Enter start number",
-		defaultAnswer: 17000001,
+		question: "Enter start number\n" + "Стартовый номер",
+		defaultAnswer: parsedOptions.globalStart,
 	});
 	const globalEndKey = await promptNum.prompt({
-		question: "Enter end number",
-		defaultAnswer: 20600000,
+		question: "Enter end number\n" + "Конечный номер",
+		defaultAnswer: parsedOptions.globalEnd,
 	});
-	const globalLinesPerFileKey = await promptList.prompt({
-		question: "Choose amount of lines per 1 file",
-		choices: ["260000", "520000", "780000", "1040000"],
+	const globalChunkSizeKey = await promptNum.prompt({
+		question:
+			"Enter amount of lines per 1 thread (chunk)\n" +
+			"Сколько кодов просит заказчик в 1 рулоне (*чанк)",
+		defaultAnswer: parsedOptions.globalChunkSize,
 	});
-	const globalOutputTypeKey = await promptList.prompt({
-		question: "Choose output file type",
-		choices: ["csv", "xlsx"],
+	const minSpacesAmountKey = await promptList.prompt({
+		question:
+			"Choose minimal amount of spaces after each chunk\n" +
+			"Минимальное кол-во пробелов после *чанка ",
+		choices: ["2", "3", "4", "5", "6"],
 	});
 
 	const globalThreads = +promptNum.getValue(globalThreadsKey);
+	const globalChunkSize = +promptNum.getValue(globalChunkSizeKey);
+
+	const linesPerFileChoices: Array<string> = [];
+	for (let i = 1; i < 20; i++) {
+		linesPerFileChoices.push((globalThreads * i * globalChunkSize).toString());
+	}
+	const globalLinesPerFileKey = await promptList.prompt({
+		question:
+			"Choose amount of lines per 1 file (based on threads X chunk size)\n" +
+			"Выбери общее кол-во линий в 1 файле. Расчитано на основе (потоки * чанк * множитель)",
+		choices: linesPerFileChoices,
+	});
+	const globalOutputTypeKey = await promptList.prompt({
+		question: "Choose output file type\n" + "Тип выходного файла",
+		choices: ["csv", "xlsx"],
+	});
+
 	const globalColumns = +promptNum.getValue(globalColumnsKey);
 	const globalStart = +promptNum.getValue(globalStartKey);
 	const globalEnd = +promptNum.getValue(globalEndKey) + 1;
 	const globalLinesPerFile = +promptList.getValue(globalLinesPerFileKey);
 	const globalOutputType = promptList.getValue(globalOutputTypeKey);
+	const minSpacesAmount = +promptList.getValue(minSpacesAmountKey);
+
+	// save new default options
+	writeFileSync(
+		"./options.json",
+		JSON.stringify(
+			{
+				globalThreads,
+				globalColumns,
+				globalStart,
+				globalEnd,
+				globalChunkSize,
+			},
+			null,
+			4,
+		),
+	);
+
+	return {
+		globalThreads,
+		globalColumns,
+		globalStart,
+		globalEnd,
+		globalLinesPerFile,
+		globalOutputType,
+		minSpacesAmount,
+	};
+}
+
+async function init() {
+	const {
+		globalThreads,
+		globalColumns,
+		globalStart,
+		globalEnd,
+		globalLinesPerFile,
+		globalOutputType,
+		minSpacesAmount,
+	} = await prompts();
 
 	console.log("\n\n##################\n\n");
 	console.log(`Global range is ${globalStart} - ${globalEnd}`);
@@ -117,7 +221,7 @@ async function init() {
 	console.log(
 		`Page consists of ${globalThreads} threads X ${globalColumns} columns, which is ${
 			globalThreads * globalColumns
-		} codes per file`,
+		} codes per raport`,
 	);
 	console.log("\n\n##################\n\n");
 
@@ -134,14 +238,15 @@ async function init() {
 		const rangeEndPrecalc = rangeStart + globalLinesPerFile;
 		const rangeEnd = rangeEndPrecalc < globalEnd ? rangeEndPrecalc : globalEnd;
 
-		const closestAppropriateNumber = calculateClosestNumber(rangeEnd - rangeStart, [
-			globalThreads,
-			globalColumns,
-		]);
+		const closestAppropriateNumber = calculateClosestNumber(
+			rangeEnd - rangeStart,
+			[globalThreads, globalColumns],
+			minSpacesAmount,
+		);
 		const spacesPerFile = closestAppropriateNumber - (rangeEnd - rangeStart);
-		const spacesPerChunk = Math.floor(spacesPerFile / 13);
-		const nullLinesToAdd = spacesPerFile - spacesPerChunk * 13;
-		const chunkSize = closestAppropriateNumber / 13;
+		const spacesPerChunk = Math.floor(spacesPerFile / globalThreads);
+		const nullLinesToAdd = spacesPerFile - spacesPerChunk * globalThreads;
+		const chunkSize = closestAppropriateNumber / globalThreads;
 
 		console.log(`Range ${rangeStart} - ${rangeEnd} | File ${x + 1}`);
 		console.log(

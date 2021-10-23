@@ -25,7 +25,7 @@
 		"scroll-wipe-cli": "printf '\\033[H\\033[2J'",
 		"---additional": "---------------------------------------------------------------",
 		"prettier": "prettier -w --config ./.prettierrc.json .",
-		"make-exe": "pkg -t node14-win -o ./START.exe ./dist/app.js --debug"
+		"make-exe": "pkg -t node14-win -o ./START.exe ./dist/app.js"
 	},
 	"dependencies": {
 		"cross-env": "^7.0.3",
