@@ -179,3 +179,4 @@ bin.txt
 target.txt
 user_config.json
 ignore
+tables_*
