@@ -6,7 +6,7 @@
 	"license": "MIT",
 	"scripts": {
 		"---start variations": "---------------------------------------------------------------",
-		"start": "yarn drop-win && yarn build-win && yarn wipe-win && yarn launch-dev",
+		"start": "yarn drop-build-linux && yarn build-linux && yarn wipe-cli && yarn launch-dev",
 		"start-prod-linux": "yarn build-linux && yarn launch-prod",
 		"---build related": "---------------------------------------------------------------",
 		"build-linux": "yarn drop-build-linux && tsc",

@@ -20,21 +20,25 @@ function startGeneration({
 		rangeStart += globalLinesPerFile.lines, x++
 	) {
 		const rangeEndPrecalc = rangeStart + globalLinesPerFile.lines;
-		const rangeEnd = rangeEndPrecalc < globalEnd ? rangeEndPrecalc : globalEnd;
+		const lastFileFlag = rangeEndPrecalc > globalEnd ? true : false;
+		const rangeEnd = lastFileFlag ? globalEnd : rangeEndPrecalc;
 
 		const closestAppropriateNumber = calculateClosestNumber(rangeEnd - rangeStart, [
 			globalThreads,
 			globalColumns,
-			globalLinesPerFile.multiplier,
+			!lastFileFlag ? globalLinesPerFile.multiplier : 1,
 		]);
 		const spacesPerFile = closestAppropriateNumber - (rangeEnd - rangeStart);
 		const spacesPerChunk = Math.floor(
-			spacesPerFile / globalLinesPerFile.multiplier / globalThreads,
+			spacesPerFile / (!lastFileFlag ? globalLinesPerFile.multiplier : 1) / globalThreads,
 		);
 		const additionalNullLines =
-			spacesPerFile - spacesPerChunk * globalThreads * globalLinesPerFile.multiplier;
+			spacesPerFile -
+			spacesPerChunk * globalThreads * (!lastFileFlag ? globalLinesPerFile.multiplier : 1);
 		const chunkSizeCalculated =
-			closestAppropriateNumber / globalThreads / globalLinesPerFile.multiplier;
+			closestAppropriateNumber /
+			globalThreads /
+			(!lastFileFlag ? globalLinesPerFile.multiplier : 1);
 
 		console.log(
 			lang === "eng"
@@ -44,19 +48,20 @@ function startGeneration({
 		console.log(
 			lang === "eng"
 				? `This file will have -\n` +
-						`Total text lines: ${closestAppropriateNumber - 1}\n` +
+						`Total text lines: ${closestAppropriateNumber}\n` +
 						`Total codes: ${rangeEnd - rangeStart}\n` +
 						`Spaces in it: ${spacesPerFile}\n` +
 						`Codes in 1 chunk: ${chunkSizeCalculated - spacesPerChunk}\n` +
+						`Chunks in a row: ${globalLinesPerFile.multiplier}\n` +
+						`Chunks in a row: ${!lastFileFlag ? globalLinesPerFile.multiplier : 1}\n` +
 						`Spaces before every chunk: ${spacesPerChunk}\n` +
 						`Null lines in the end: ${additionalNullLines}\n`
 				: `В этом файле будет - \n` +
-						`Всего текстовых линий (кодов и пробелов): ${
-							closestAppropriateNumber - 1
-						}\n` +
+						`Всего текстовых линий (кодов и пробелов): ${closestAppropriateNumber}\n` +
 						`Всего кодов: ${rangeEnd - rangeStart}\n` +
 						`Пробелов: ${spacesPerFile}\n` +
 						`Кодов в 1 чанке: ${chunkSizeCalculated - spacesPerChunk}\n` +
+						`Чанков в ряд: ${!lastFileFlag ? globalLinesPerFile.multiplier : 1}\n` +
 						`Пробелов после каждого чанка: ${spacesPerChunk}\n` +
 						`Нулевых линий в конце: ${additionalNullLines}\n`,
 		);

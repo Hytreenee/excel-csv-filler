@@ -18,21 +18,25 @@ function preShowResults({
 		rangeStart += globalLinesPerFile.lines, filesCounter++
 	) {
 		const rangeEndPrecalc = rangeStart + globalLinesPerFile.lines;
+		const lastFileFlag = rangeEndPrecalc > globalEnd ? true : false;
 		const rangeEnd = rangeEndPrecalc < globalEnd ? rangeEndPrecalc : globalEnd;
 
 		const closestAppropriateNumber = calculateClosestNumber(rangeEnd - rangeStart, [
 			globalThreads,
 			globalColumns,
-			globalLinesPerFile.multiplier,
+			!lastFileFlag ? globalLinesPerFile.multiplier : 1,
 		]);
 		const spacesPerFile = closestAppropriateNumber - (rangeEnd - rangeStart);
 		const spacesPerChunk = Math.floor(
-			spacesPerFile / globalLinesPerFile.multiplier / globalThreads,
+			spacesPerFile / (!lastFileFlag ? globalLinesPerFile.multiplier : 1) / globalThreads,
 		);
 		const additionalNullLines =
-			spacesPerFile - spacesPerChunk * globalThreads * globalLinesPerFile.multiplier;
+			spacesPerFile -
+			spacesPerChunk * globalThreads * (!lastFileFlag ? globalLinesPerFile.multiplier : 1);
 		const chunkSizeCalculated =
-			closestAppropriateNumber / globalThreads / globalLinesPerFile.multiplier;
+			closestAppropriateNumber /
+			globalThreads /
+			(!lastFileFlag ? globalLinesPerFile.multiplier : 1);
 
 		if (rangeEnd === globalEnd) {
 			lastFile = {
@@ -75,6 +79,7 @@ function preShowResults({
 					`Codes in 1 chunk: ${
 						mostFiles.chunkSizeCalculated - mostFiles.spacesPerChunk
 					}\n` +
+					`Chunks in a row: ${globalLinesPerFile.multiplier}\n` +
 					`Spaces before every chunk: ${mostFiles.spacesPerChunk}\n` +
 					`Null lines in the end: ${mostFiles.additionalNullLines}\n`
 			: `Большинство файлов будут иметь такие данные -\n` +
@@ -84,6 +89,7 @@ function preShowResults({
 					`Кодов в 1 чанке: ${
 						mostFiles.chunkSizeCalculated - mostFiles.spacesPerChunk
 					}\n` +
+					`Чанков в ряд: ${globalLinesPerFile.multiplier}\n` +
 					`Пробелов перед каждым чанком: ${mostFiles.spacesPerChunk}\n` +
 					`Нулевых линий в конце: ${mostFiles.additionalNullLines}\n`,
 	);
@@ -98,6 +104,7 @@ function preShowResults({
 					`Codes in 1 chunk: ${
 						lastFile.chunkSizeCalculated - lastFile.spacesPerChunk
 					}\n` +
+					`Chunks in a row: ${1}\n` +
 					`Spaces before every chunk: ${lastFile.spacesPerChunk}\n` +
 					`Null lines in the end: ${lastFile.additionalNullLines}\n`
 			: `Последний файл будет иметь такие данные -\n` +
@@ -105,6 +112,7 @@ function preShowResults({
 					`Всего кодов: ${lastFile.linesPerFile}\n` +
 					`Пробелов: ${lastFile.spacesPerFile}\n` +
 					`Кодов в 1 чанке: ${lastFile.chunkSizeCalculated - lastFile.spacesPerChunk}\n` +
+					`Чанков в ряд: ${1}\n` +
 					`Пробелов перед каждым чанком: ${lastFile.spacesPerChunk}\n` +
 					`Нулевых линий в конце: ${lastFile.additionalNullLines}\n`,
 	);
