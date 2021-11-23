@@ -12,6 +12,9 @@ function makeBook({
 	const wb: WorkBook = utils.book_new();
 	const wsData: Array<Array<string>> = [];
 
+	// instead of manually adding later on
+	wsData.push(["name1"]);
+
 	let chunkSizeCheckpoint = rangeStart;
 	let checkpointCounter = 0;
 

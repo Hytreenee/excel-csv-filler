@@ -13,7 +13,7 @@ function computeFilesParams({
 	let step = globalLinesPerFile.lines;
 
 	for (let rangeStart = globalStart; rangeStart < globalEnd; rangeStart += step) {
-		const { rangeEnd } = rangeCalc({
+		let { rangeEnd } = rangeCalc({
 			rangeStart,
 			globalLinesPerFile,
 			globalEnd,
@@ -44,6 +44,9 @@ function computeFilesParams({
 			// also changing next start position by reassigning step
 			if (codesPerFile > codesPerFileWithCurrentMultiplier) {
 				const approptiateCodesPerFile = codesPerFileWithCurrentMultiplier;
+
+				// recalculating end value
+				rangeEnd = rangeStart + approptiateCodesPerFile;
 				step = approptiateCodesPerFile;
 				codesPerFile = approptiateCodesPerFile;
 				multiplier = i;
