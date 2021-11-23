@@ -1,6 +1,7 @@
-import { fsInit, fsSave } from "./fs";
+import { createOutputFolder, fsInit, fsSave } from "./fs";
 import { clearCli } from "./helpers/util";
 import { preShowResults, startGeneration } from "./logic";
+import { computeFilesParams } from "./logic/compute-files-params.logic";
 import { promptChooseLang, promptInitValues, promptStartProcess } from "./prompts";
 
 setInterval(() => {
@@ -27,13 +28,18 @@ async function main(lang, fileName) {
 		globalChunkSize,
 	});
 
-	preShowResults({
-		lang,
+	const filesParams = computeFilesParams({
 		globalThreads,
 		globalColumns,
 		globalStart,
 		globalEnd,
 		globalLinesPerFile,
+		globalChunkSize,
+	});
+
+	preShowResults({
+		lang,
+		filesParams,
 	});
 
 	const confirmContinue = await promptStartProcess(lang);
@@ -41,14 +47,14 @@ async function main(lang, fileName) {
 	clearCli();
 
 	if (confirmContinue) {
+		const folderName = `tables_${globalStart}-${globalEnd}_${globalLinesPerFile.lines}_${globalOutputType}`;
+		createOutputFolder(folderName);
+
 		startGeneration({
 			lang,
-			globalThreads,
-			globalColumns,
-			globalStart,
-			globalEnd,
-			globalLinesPerFile,
+			folderName,
 			globalOutputType,
+			filesParams,
 		});
 	} else {
 		main(lang, fileName);

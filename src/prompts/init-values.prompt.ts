@@ -1,4 +1,5 @@
 import { readFileSync } from "fs";
+import { BookType } from "xlsx";
 import { CliPromptList, CliPromptNum } from "../core/cli-prompt";
 
 async function promptInitValues(lang) {
@@ -57,8 +58,8 @@ async function promptInitValues(lang) {
 	const globalColumns = +promptNum.getValue(globalColumnsKey);
 	const globalStart = +promptNum.getValue(globalStartKey);
 	const globalEnd = +promptNum.getValue(globalEndKey) + 1;
-	const globalLinesPerFile: { value; multiplier } = promptList.getValue(globalLinesPerFileKey);
-	const globalOutputType = promptList.getValue(globalOutputTypeKey);
+	const globalLinesPerFile: { lines; multiplier } = promptList.getValue(globalLinesPerFileKey);
+	const globalOutputType = <BookType>promptList.getValue(globalOutputTypeKey);
 
 	return {
 		globalThreads,
