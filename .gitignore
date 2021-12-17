@@ -180,5 +180,5 @@ target.txt
 user_config.json
 ignore
 tables_*
-*.json
+options.json
 *.exe

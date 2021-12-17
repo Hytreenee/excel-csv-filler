@@ -1,0 +1,43 @@
+{
+	"name": "excel-csv-filler",
+	"version": "1.0.0",
+	"main": "app.js",
+	"author": "SanariSan <SanariSan@users.noreply.github.com>",
+	"license": "MIT",
+	"scripts": {
+		"---start variations": "---------------------------------------------------------------",
+		"start": "yarn drop-build-linux && yarn build-linux && yarn wipe-cli && yarn launch-dev",
+		"start-prod-linux": "yarn build-linux && yarn launch-prod",
+		"---build related": "---------------------------------------------------------------",
+		"build-linux": "yarn drop-build-linux && tsc",
+		"build-win": "tsc",
+		"drop-build-linux": "rm -rf ./dist",
+		"drop-win": "del /f /s /q \"./dist\"",
+		"---launch build variations": "---------------------------------------------------------------",
+		"launch-prod": "cross-env NODE_ENV=production node -r dotenv/config ./dist/app.js",
+		"launch-dev": "cross-env NODE_ENV=development node -r dotenv/config ./dist/app.js",
+		"---copy dependent files to build dir": "---------------------------------------------------------------",
+		"copy-deps": "yarn copy-config",
+		"copy-config": "true",
+		"---cli-output": "---------------------------------------------------------------",
+		"wipe-win": "cls",
+		"wipe-cli": "printf '\\033c\\033[3J'",
+		"scroll-wipe-cli": "printf '\\033[H\\033[2J'",
+		"---additional": "---------------------------------------------------------------",
+		"prettier": "prettier -w --config ./.prettierrc.json .",
+		"make-exe": "pkg -t node14-win -o ./START.exe ./dist/app.js"
+	},
+	"dependencies": {
+		"cross-env": "^7.0.3",
+		"dotenv": "^10.0.0",
+		"inquirer": "^8.2.0",
+		"typescript": "^4.3.5",
+		"xlsx": "^0.17.3"
+	},
+	"devDependencies": {
+		"@types/inquirer": "^8.1.3",
+		"@types/node": "^16.11.0",
+		"madge": "^5.0.1",
+		"prettier": "^2.3.2"
+	}
+}
