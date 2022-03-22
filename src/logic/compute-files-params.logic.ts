@@ -109,7 +109,9 @@ function parametersCalc({
 	const spacesPerChunk = Math.floor(spacesPerFile / multiplier / globalThreads);
 	const additionalNullLines = spacesPerFile - spacesPerChunk * globalThreads * multiplier;
 
-	// i honeslty have no clue why final value even has extra spacesPerChunk in it, but subtracting it worked out, finally...
+	// calculated value contains 1 extra spacesPerChunk value
+	// because closestAppropriateNumber > codesPerFile and consists of (chunkSize + spacesPerChunk) * globalThreads
+	// so when we divide by globalThreads, it left chunkSize + spacesPerChunk for 1 thread
 	const chunkSizeCalculated = isLastFile
 		? closestAppropriateNumber / globalThreads / multiplier - spacesPerChunk
 		: globalChunkSize;
